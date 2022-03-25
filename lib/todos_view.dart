@@ -1,16 +1,18 @@
-import 'package:day18_todo_app/models/Todo.dart';
+import 'package:day18_todo_app/loading_view.dart';
 import 'package:day18_todo_app/todo_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'loading_view.dart';
+import 'models/Todo.dart';
 
 class TodosView extends StatefulWidget {
   @override
-  State<TodosView> createState() => _TodosViewState();
+  State<StatefulWidget> createState() => _TodosViewState();
 }
 
 class _TodosViewState extends State<TodosView> {
+  final _titleController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,17 +42,37 @@ class _TodosViewState extends State<TodosView> {
     );
   }
 
+  Widget _newTodoView() {
+    return Column(
+      children: [
+        TextField(
+          controller: _titleController,
+          decoration: InputDecoration(hintText: 'Enter todo title'),
+        ),
+        ElevatedButton(
+            onPressed: () {
+              BlocProvider.of<TodoCubit>(context)
+                  .createTodo(_titleController.text);
+              _titleController.text = '';
+              Navigator.of(context).pop();
+            },
+            child: Text('Save Todo'))
+      ],
+    );
+  }
+
   Widget _floatingActionButton() {
     return FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
-          print('show new todo sheet');
+          showModalBottomSheet(
+              context: context, builder: (context) => _newTodoView());
         });
   }
 
   Widget _emptyTodosView() {
     return Center(
-      child: Text('No Todos yet'),
+      child: Text('No todos yet'),
     );
   }
 
@@ -61,7 +83,12 @@ class _TodosViewState extends State<TodosView> {
         final todo = todos[index];
         return Card(
           child: CheckboxListTile(
-              value: todo.isComplete, onChanged: (newValue) {}),
+              title: Text(todo.title),
+              value: todo.isComplete,
+              onChanged: (newValue) {
+                BlocProvider.of<TodoCubit>(context)
+                    .updateTodoIsComplete(todo, newValue!);
+              }),
         );
       },
     );
